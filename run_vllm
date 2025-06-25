@@ -1,0 +1,137 @@
+#!/bin/bash
+#SBATCH --job-name=rl_bd
+#SBATCH --partition=icis
+#SBATCH --qos=icis-large
+#SBATCH --cpus-per-task=50
+#SBATCH --mem=120G
+#SBATCH --gres=gpu:5
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1        # One task per GPU (2 GPUs total)
+#SBATCH --time=48:00:00
+#SBATCH --output=/vol/dis/rriano/myjob.out
+#SBATCH --error=/vol/dis/rriano/myjob.err
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=roberto.rianohidalgo@ru.nl
+# echo "working" > /vol/dis/rriano/working.txt &
+
+# export HF_HOME=/vol/dis/rriano/temp
+
+export HF_HOME=/vol/disnobackup/rriano/huggingface_cache
+export TRANSFORMERS_CACHE=$HF_HOME/transformers
+export HF_DATASETS_CACHE=$HF_HOME/datasets
+export HF_MODULES_CACHE=$HF_HOME/modules
+export HF_METRICS_CACHE=$HF_HOME/metrics
+export TRITON_CACHE_DIR=/vol/disnobackup/rriano/.triton_cache
+
+export XDG_CACHE_HOME=/vol/disnobackup/rriano/xdg_cache
+export ACCELERATE_CONFIG_FILE=$XDG_CACHE_HOME/huggingface/accelerate/default_config.yaml
+# export TRITON_CACHE_DIR=/tmp/triton_autotune
+# export HF_HOME=/vol/dis/rriano
+export CUDA_DEVICE_ORDER=PCI_BUS_ID 
+
+# Load conda and activate your environment
+# source /vol/dis/rriano/miniconda3/etc/profile.d/conda.sh
+# conda activate /vol/dis/rriano/miniconda3/envs/myenv_rlbd
+
+# source /vol/dis/rriano/myenv_rlbd/bin/activate
+
+# python3 -m venv /vol/dis/rriano/myenv3_rlbd
+# source /vol/dis/rriano/myenv3_rlbd/bin/activate
+source fresh_rlhf_env/bin/activate
+
+# pip install -r /vol/dis/rriano/requirementss.txt --no-cache-dir
+
+# pip install torch==2.3.0 torchvision==0.18.0 --index-url https://download.pytorch.org/whl/cu121
+# pip install flash-attn --no-build-isolation
+# pip install \
+#   trl @ git+https://github.com/huggingface/trl.git@5e2ef1a901f4169c49aa3c351c72a031580ea9b4
+#     accelerate==0.29.2 \
+#     transformers==4.40.1 \
+#     numpy==1.24.4 \
+#     peft==0.10.0 \
+#     bitsandbytes \
+#     einops \
+#     datasets \
+#     wandb \
+#     ninja \
+#     deepspeed==0.14.0
+# pip install --upgrade pip setuptools wheel
+
+# pip install torch==2.3.0 torchvision==0.18.0 --index-url https://download.pytorch.org/whl/cu121
+# pip install numpy==1.24.4
+# pip install transformers==4.40.1 accelerate==0.29.2 deepspeed==0.14.0
+# pip install flash-attn --no-build-isolation
+# pip install git+https://github.com/huggingface/trl.git@5e2ef1a901f4169c49aa3c351c72a031580ea9b4
+
+# pip install --upgrade torch torchvision --index-url https://download.pytorch.org/whl/cu121
+# export ACCELERATE_CONFIG_FILE=/vol/dis/rriano/accelerator2.yaml rtx_a6000
+# accelerate launch --multi_gpu train.py
+# pip install deepspeed==0.16.3
+# pip install --upgrade git+https://github.com/vllm-project/vllm.git@main
+# TMPDIR=/vol/dis/rriano/tmp pip install --upgrade --force-reinstall git+https://github.com/vllm-project/vllm.git@main --verbose
+
+# export VLLM_CONFIGURE_LOGGING=0
+# export VLLM_LOGGING_LEVEL=ERROR
+export NCCL_TIMEOUT=3600000    # e.g. 1 hour, in milliseconds
+# export VLLM_ENFORCE_EAGER=true
+# trl vllm-serve --model Qwen/Qwen2.5-3B-Instruct --tensor-parallel-size 5 --gpu-memory-utilization 0.25 --swap-space 8 --port 8000 --trust-remote-code &
+#check if a previous checkpoint exists in /vol/disnobackup/rriano/rl_bd/fuckme/
+# CHECKPOINT_DIR="/vol/disnobackup/rriano/rl_bd/fuckme/"
+# OUTPUT_PATH="/vol/disnobackup/rriano/rl_bd/merged_model/full_model_fp32.bin"
+
+# if [ -d "$CHECKPOINT_DIR" ]; then
+#   # Find the latest checkpoint with trainer_state.json
+#   LATEST_CHECKPOINT=$(find "$CHECKPOINT_DIR" -type f -name "trainer_state.json" | sort | tail -n 1)
+
+#   if [ -n "$LATEST_CHECKPOINT" ]; then
+#     CHECKPOINT_PATH=$(dirname "$LATEST_CHECKPOINT")
+#     echo "Using checkpoint: $CHECKPOINT_PATH"
+
+#     # Run zero_to_fp32.py to convert the sharded checkpoint
+#     if [ -f "$CHECKPOINT_PATH/zero_to_fp32.py" ]; then
+#       python "$CHECKPOINT_PATH/zero_to_fp32.py" "$CHECKPOINT_PATH" "$OUTPUT_PATH"
+#       echo "FP32 model written to $OUTPUT_PATH"
+#       RESUME_FROM_CHECKPOINT="$OUTPUT_PATH"
+#     else
+#       echo "zero_to_fp32.py not found in $CHECKPOINT_PATH"
+#     fi
+
+#   else
+#     echo "No valid checkpoint with trainer_state.json found in $CHECKPOINT_DIR"
+#     export RESUME_FROM_CHECKPOINT="Qwen/Qwen2.5-3B-Instruct"
+#   fi
+# fi
+# export CHECKPOINT_DIR="/vol/disnobackup/rriano/rl_bd/models/fuckme_2/checkpoint_model"
+# CUDA_VISIBLE_DEVICES=4 nohup trl vllm-serve --model "$(dirname "$OUTPUT_PATH")" --enforce_eager true --tensor-parallel-size 1 --gpu-memory-utilization 0.90 --host 127.0.0.1 --port 8000 >  /vol/dis/rriano/vllmshit.log 2>&1 & #/dev/null & # 2>&1 &
+# CUDA_VISIBLE_DEVICES=4 nohup trl vllm-serve --model "$CHECKPOINT_DIR" --enforce_eager true --tensor_parallel_size  1  --gpu_memory_utilization 0.90 --host 127.0.0.1 --port 8000 >  /vol/dis/rriano/vllmshit.log 2>&1 & #/dev/null & # 2>&1 &
+CUDA_VISIBLE_DEVICES=4 nohup trl vllm-serve --model Qwen/Qwen2.5-3B-Instruct --enforce_eager true --tensor_parallel_size  1  --gpu_memory_utilization 0.90 --host 127.0.0.1 --port 8000 >  /vol/dis/rriano/vllmshit.log 2>&1 & #/dev/null & # 2>&1 &
+VLLM_PID=$!
+echo "[batch] waiting for vLLM /health/ …"
+until curl -sf http://127.0.0.1:8000/health/ | grep -q '"status":"ok"'; do
+  sleep 5
+done
+echo "[batch] vLLM is up"
+
+curl -X POST "http://127.0.0.1:8000/generate?prompts=["Hello"]&max_tokens=10"
+
+echo "[batch] vLLM TESTED"
+
+export TRL_VLLM_ENDPOINT="http://127.0.0.1:8000"
+
+export DS_ZERO_STAGE=2
+nvidia-smi --query-gpu=index,memory.used,utilization.gpu --format=csv -l 60 > /vol/dis/rriano/nvidia-smi.log &
+./monitor.sh &
+
+export NCCL_ASYNC_ERROR_HANDLING=1
+#  --multi_gpu /home/rriano/.cache/huggingface/accelerate/default_config.yaml --multi_gpu
+# accelerate launch --config_file /vol/dis/rriano/accelerator2.yaml  train.py --config /vol/dis/rriano/grpo.yaml /vol/dis/rriano/accelerator2.yaml  
+CUDA_VISIBLE_DEVICES=0,1,2,3 accelerate launch --config_file  /home/rriano/.cache/huggingface/accelerate/default_config.yaml  --mixed_precision bf16 --num_processes 4 --use_deepspeed --deepspeed_config_file /vol/disnobackup/rriano/rl_bd/deepspeed_judge_config.json --zero_stage 2 --mixed_precision bf16 train_DO_NOT_DELETE.py
+# torchrun --nproc_per_node=5 train_working.py
+
+
+TRAIN_EXIT=$?
+
+#### 3 · clean up #######################################################
+kill $VLLM_PID
+wait $VLLM_PID 2>/dev/null
+exit $TRAIN_EXIT
